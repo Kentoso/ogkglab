@@ -60,25 +60,20 @@ func (m *Map) AddObstacle(obstacle Obstacle) {
 }
 
 func (m *Map) ToPolygon() *Polygon {
-	var vertices []Point
+	var vertices, verticesForBoundingBox []Point
 	var edges []Segment
 
 	for _, obstacle := range m.obstacles {
-		for i := 0; i < len(obstacle.vertices); i++ {
-			vertices = append(vertices, obstacle.vertices[i])
-			if i > 0 {
-				edges = append(edges, Segment{start: obstacle.vertices[i-1], end: obstacle.vertices[i]})
-			}
-		}
-		edges = append(edges, Segment{start: obstacle.vertices[len(obstacle.vertices)-1], end: obstacle.vertices[0]})
+		verticesForBoundingBox = append(verticesForBoundingBox, obstacle.vertices...)
 	}
+	verticesForBoundingBox = append(verticesForBoundingBox, m.s, m.t)
 
 	//vertices = append(vertices, m.s, m.t)
 
-	minX, minY := vertices[0].X, vertices[0].Y
-	maxX, maxY := vertices[0].X, vertices[0].Y
+	minX, minY := verticesForBoundingBox[0].X, verticesForBoundingBox[0].Y
+	maxX, maxY := verticesForBoundingBox[0].X, verticesForBoundingBox[0].Y
 
-	for _, v := range append(vertices, []Point{m.s, m.t}...) {
+	for _, v := range verticesForBoundingBox {
 		if v.X < minX {
 			minX = v.X
 		}
@@ -101,9 +96,9 @@ func (m *Map) ToPolygon() *Polygon {
 
 	boundingBoxVertices := []Point{
 		{X: minX, Y: minY},
-		{X: maxX, Y: minY},
-		{X: maxX, Y: maxY},
 		{X: minX, Y: maxY},
+		{X: maxX, Y: maxY},
+		{X: maxX, Y: minY},
 	}
 
 	vertices = append(vertices, boundingBoxVertices...)
@@ -116,6 +111,14 @@ func (m *Map) ToPolygon() *Polygon {
 	}
 
 	edges = m.addBridges(vertices[len(vertices)-4:], edges)
+	// get vertices from edges
+	var newVertices []Point
+
+	for _, e := range edges {
+		newVertices = append(newVertices, e.start)
+	}
+	
+	vertices = newVertices
 
 	return &Polygon{
 		vertices: vertices,
@@ -125,7 +128,6 @@ func (m *Map) ToPolygon() *Polygon {
 
 func (m *Map) addBridges(vertices []Point, edges []Segment) []Segment {
 	// Create bridges for each hole
-
 	currentEdges := slices.Clone(edges)
 	for i := 0; i < len(m.obstacles); i++ {
 		hole := m.obstacles[i].vertices
@@ -171,13 +173,43 @@ func (m *Map) addBridges(vertices []Point, edges []Segment) []Segment {
 		// Add the best bridge to the list of edges
 		//bestBridgeReversed := Segment{start: bestBridge.end, end: bestBridge.start}
 
-		edges = append(edges, bestBridge)
+		//edges = append(edges, bestBridge)
 		//edges = append(edges, bestBridgeReversed)
+
+		newEdges := []Segment{}
+		inserted := false
+
+		for _, e := range currentEdges {
+			newEdges = append(newEdges, e)
+			if !inserted && (e.end == bestBridge.start || e.end == bestBridge.end) {
+				newEdges = append(newEdges, bestBridge)
+
+				edgesShift := 0
+				for k := 0; k < len(hole); k++ {
+					if hole[k] == bestBridge.end {
+						edgesShift = k
+						break
+					}
+					//newEdges = append(newEdges, Segment{start: hole[k], end: hole[(k+1)%len(hole)]})
+				}
+
+				for k := 0; k < len(hole); k++ {
+					newEdges = append(newEdges, Segment{start: hole[(k+edgesShift)%len(hole)], end: hole[(k+1+edgesShift)%len(hole)]})
+				}
+
+				reverseBestBridge := Segment{start: bestBridge.end, end: bestBridge.start}
+				newEdges = append(newEdges, reverseBestBridge)
+
+				inserted = true
+			}
+		}
+
+		currentEdges = newEdges
 
 		fmt.Println("Added ", bestBridge)
 	}
 
-	return edges
+	return currentEdges
 }
 
 func (m *Map) Draw() fyne.CanvasObject {

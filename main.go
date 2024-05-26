@@ -87,7 +87,7 @@ func main() {
 	g := Game{
 		polygonMap:   polygonMap,
 		window:       &window,
-		currentState: stateInput,
+		currentState: statePolygon,
 	}
 
 	nextStateFunc := func() {
