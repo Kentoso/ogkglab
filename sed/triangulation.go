@@ -1,7 +1,6 @@
 package sed
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -19,21 +18,20 @@ type TriangulationResult struct {
 	triangles        []Triangle
 }
 
-type Corridor struct {
-	vertices []Point
-	doors    [][2]Point // doors of the corridor
-}
+func (tr *TriangulationResult) ToVertexAdjacencyMap() map[Point][]Point {
+	adjacencyMap := make(map[Point][]Point)
 
-func (c *Corridor) Print() {
-	fmt.Println("Corridor vertices:")
-	for _, vertex := range c.vertices {
-		fmt.Printf("(%.2f, %.2f) ", vertex.X, vertex.Y)
+	for _, triangle := range tr.triangles {
+		for i := 0; i < 3; i++ {
+			v1 := triangle.vertices[i]
+			v2 := triangle.vertices[(i+1)%3]
+
+			adjacencyMap[v1] = append(adjacencyMap[v1], v2)
+			adjacencyMap[v2] = append(adjacencyMap[v2], v1)
+		}
 	}
-	fmt.Println("\nCorridor doors:")
-	for _, door := range c.doors {
-		fmt.Printf("((%.2f, %.2f), (%.2f, %.2f)) ", door[0].X, door[0].Y, door[1].X, door[1].Y)
-	}
-	fmt.Println()
+
+	return adjacencyMap
 }
 
 func (t *TriangulationResult) Draw() fyne.CanvasObject {
@@ -198,43 +196,4 @@ func IncorporatePoints(tr *TriangulationResult, s, t Point) *TriangulationResult
 		originalVertices: append(tr.originalVertices, s, t),
 		triangles:        tr.triangles,
 	}
-}
-
-func (tr *TriangulationResult) GetCorridors() []Corridor {
-	dualGraph := BuildGraphDual(*tr)
-
-	simplifiedDualGraph := dualGraph.Simplify()
-
-	// Identify junction triangles (degree >= 3)
-	junctions := map[int]bool{}
-	for node, _ := range simplifiedDualGraph.adjacencyList {
-		junctions[node] = true
-	}
-
-	corridors := []Corridor{}
-	visited := map[int]bool{}
-	for i := 0; i < len(tr.triangles); i++ {
-		if !visited[i] && !junctions[i] {
-			corridor := Corridor{vertices: []Point{}, doors: [][2]Point{}}
-			queue := []int{i}
-			for len(queue) > 0 {
-				curr := queue[0]
-				queue = queue[1:]
-				if visited[curr] || junctions[curr] {
-					continue
-				}
-				visited[curr] = true
-				corridor.vertices = append(corridor.vertices, tr.triangles[curr].vertices[:]...)
-				for _, neighbor := range tr.triangles[curr].neighbors {
-					if !visited[neighbor] && !junctions[neighbor] {
-						queue = append(queue, neighbor)
-					} else if junctions[neighbor] {
-						corridor.doors = append(corridor.doors, [2]Point{tr.triangles[curr].vertices[0], tr.triangles[neighbor].vertices[0]})
-					}
-				}
-			}
-			corridors = append(corridors, corridor)
-		}
-	}
-	return corridors
 }

@@ -44,14 +44,61 @@ func CreateRandomObstacle(numPoints int, minX, minY, maxX, maxY float32) Obstacl
 	return Obstacle{Vertices: points}
 }
 
+type StepsResults struct {
+	Polygon             *Polygon
+	Triangulation       *TriangulationResult
+	TriangulationWithST *TriangulationResult
+}
+
 type Map struct {
-	obstacles []Obstacle
-	S         Point
-	T         Point
+	obstacles    []Obstacle
+	S            Point
+	T            Point
+	ShortestPath []Point
+	StepsResults *StepsResults
 }
 
 func NewMap(s, t Point) *Map {
-	return &Map{nil, s, t}
+	return &Map{nil, s, t, nil, &StepsResults{}}
+}
+
+func (m *Map) DoesSTIntersectObstacles() bool {
+	for _, obstacle := range m.obstacles {
+		for i := 0; i < len(obstacle.Vertices); i++ {
+			start := obstacle.Vertices[i]
+			end := obstacle.Vertices[(i+1)%len(obstacle.Vertices)]
+			if segmentsIntersect(m.S, m.T, start, end) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (m *Map) FindShortestPath() {
+	if !m.DoesSTIntersectObstacles() {
+		m.ShortestPath = []Point{m.S, m.T}
+		return
+	}
+
+	p := m.ToPolygon()
+	m.StepsResults.Polygon = p
+
+	t := TriangulateEarClipping(*p)
+	m.StepsResults.Triangulation = t
+
+	tWithSandT := IncorporatePoints(t, m.S, m.T)
+	m.StepsResults.TriangulationWithST = tWithSandT
+
+	visibilityGraph := NewVisibilityGraph(tWithSandT, m.S, m.T)
+	_, path := visibilityGraph.ShortestEuclideanDistance()
+
+	m.ShortestPath = path
+}
+
+func (m *Map) AddObstacles(obstacles ...Obstacle) {
+	m.obstacles = append(m.obstacles, obstacles...)
 }
 
 func (m *Map) AddObstacle(obstacle Obstacle) {
@@ -245,6 +292,17 @@ func (m *Map) Draw() fyne.CanvasObject {
 		text.TextSize = 12
 		text.Move(fyne.NewPos(p.point.X+5, p.point.Y-6)) // Positioning the text near the point
 		objects = append(objects, text)
+	}
+
+	if m.ShortestPath != nil {
+		for i := 0; i < len(m.ShortestPath)-1; i++ {
+			start := m.ShortestPath[i]
+			end := m.ShortestPath[i+1]
+			line := canvas.NewLine(color.RGBA{0, 255, 0, 255})
+			line.Position1 = fyne.NewPos(start.X, start.Y)
+			line.Position2 = fyne.NewPos(end.X, end.Y)
+			objects = append(objects, line)
+		}
 	}
 
 	return container.NewWithoutLayout(objects...)

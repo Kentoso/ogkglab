@@ -16,6 +16,7 @@ const (
 	stateMap
 	statePolygon
 	stateTriangulation
+	stateShortestPath
 )
 
 //var currentState = stateInput
@@ -76,22 +77,36 @@ func triangulationState(game *Game, polygonMap *sed.Map) {
 
 	tWithSandT := sed.IncorporatePoints(t, polygonMap.S, polygonMap.T)
 	updateWindow(game, drawObject(tWithSandT))
+	//fmt.Println(tWithSandT.ToVertexAdjacencyMap())
 
-	corridors := tWithSandT.GetCorridors()
-	for _, corridor := range corridors {
-		corridor.Print()
-	}
+	visibilityGraph := sed.NewVisibilityGraph(tWithSandT, polygonMap.S, polygonMap.T)
+	distanceMap, path := visibilityGraph.ShortestEuclideanDistance()
+	fmt.Println(distanceMap)
+	fmt.Println(path)
+	//corridors := tWithSandT.GetCorridors()
+	//for _, corridor := range corridors {
+	//	corridor.Print()
+	//}
 }
 
-var stateFuncs = []func(*Game, *sed.Map){inputState, mapState, polygonState, triangulationState}
+func shortestPathState(game *Game, polygonMap *sed.Map) {
+	polygonMap.FindShortestPath()
+
+	updateWindow(game, drawObject(polygonMap))
+}
+
+var stateFuncs = []func(*Game, *sed.Map){inputState, mapState, polygonState, triangulationState, shortestPathState}
 
 func main() {
 	myApp := app.New()
 	window := myApp.NewWindow("Border Layout")
 
 	polygonMap := sed.NewMap(sed.Point{10, 10}, sed.Point{100, 100})
-	//polygonMap.AddObstacle(sed.CreateRandomObstacle(3, 10, 10, 100, 100))
-	polygonMap.AddObstacle(sed.Obstacle{[]sed.Point{{30, 50}, {70, 50}, {60, 90}}})
+	polygonMap.AddObstacle(sed.CreateRandomObstacle(20, 10, 10, 20, 20))
+	polygonMap.AddObstacle(sed.CreateRandomObstacle(20, 30, 30, 40, 40))
+	polygonMap.AddObstacle(sed.CreateRandomObstacle(20, 50, 50, 60, 60))
+	//polygonMap.AddObstacle(sed.Obstacle{[]sed.Point{{30, 50}, {70, 50}, {60, 90}}})
+	//polygonMap.AddObstacle(sed.Obstacle{[]sed.Point{{-30, -50}, {-70, -50}, {-60, -90}}})
 	g := Game{
 		polygonMap:   polygonMap,
 		window:       &window,
