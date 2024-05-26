@@ -71,8 +71,16 @@ func polygonState(game *Game, polygonMap *sed.Map) {
 }
 
 func triangulationState(game *Game, polygonMap *sed.Map) {
-	updateWindow(game, drawObject(sed.TriangulateEarClipping(*polygonMap.ToPolygon())))
+	t := sed.TriangulateEarClipping(*polygonMap.ToPolygon())
+	//updateWindow(game, drawObject(t))
 
+	tWithSandT := sed.IncorporatePoints(t, polygonMap.S, polygonMap.T)
+	updateWindow(game, drawObject(tWithSandT))
+
+	corridors := tWithSandT.GetCorridors()
+	for _, corridor := range corridors {
+		corridor.Print()
+	}
 }
 
 var stateFuncs = []func(*Game, *sed.Map){inputState, mapState, polygonState, triangulationState}
@@ -82,8 +90,8 @@ func main() {
 	window := myApp.NewWindow("Border Layout")
 
 	polygonMap := sed.NewMap(sed.Point{10, 10}, sed.Point{100, 100})
-	polygonMap.AddObstacle(sed.CreateRandomObstacle(3, 10, 10, 100, 100))
-
+	//polygonMap.AddObstacle(sed.CreateRandomObstacle(3, 10, 10, 100, 100))
+	polygonMap.AddObstacle(sed.Obstacle{[]sed.Point{{30, 50}, {70, 50}, {60, 90}}})
 	g := Game{
 		polygonMap:   polygonMap,
 		window:       &window,

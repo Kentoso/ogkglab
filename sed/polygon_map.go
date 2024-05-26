@@ -1,7 +1,6 @@
 package sed
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -14,7 +13,7 @@ import (
 )
 
 type Obstacle struct {
-	vertices []Point
+	Vertices []Point
 }
 
 func CreateRandomObstacle(numPoints int, minX, minY, maxX, maxY float32) Obstacle {
@@ -42,13 +41,13 @@ func CreateRandomObstacle(numPoints int, minX, minY, maxX, maxY float32) Obstacl
 		return angle1 < angle2
 	})
 
-	return Obstacle{vertices: points}
+	return Obstacle{Vertices: points}
 }
 
 type Map struct {
 	obstacles []Obstacle
-	s         Point
-	t         Point
+	S         Point
+	T         Point
 }
 
 func NewMap(s, t Point) *Map {
@@ -64,11 +63,11 @@ func (m *Map) ToPolygon() *Polygon {
 	var edges []Segment
 
 	for _, obstacle := range m.obstacles {
-		verticesForBoundingBox = append(verticesForBoundingBox, obstacle.vertices...)
+		verticesForBoundingBox = append(verticesForBoundingBox, obstacle.Vertices...)
 	}
-	verticesForBoundingBox = append(verticesForBoundingBox, m.s, m.t)
+	verticesForBoundingBox = append(verticesForBoundingBox, m.S, m.T)
 
-	//vertices = append(vertices, m.s, m.t)
+	//Vertices = append(Vertices, m.S, m.T)
 
 	minX, minY := verticesForBoundingBox[0].X, verticesForBoundingBox[0].Y
 	maxX, maxY := verticesForBoundingBox[0].X, verticesForBoundingBox[0].Y
@@ -111,13 +110,13 @@ func (m *Map) ToPolygon() *Polygon {
 	}
 
 	edges = m.addBridges(vertices[len(vertices)-4:], edges)
-	// get vertices from edges
+	// get Vertices from edges
 	var newVertices []Point
 
 	for _, e := range edges {
 		newVertices = append(newVertices, e.start)
 	}
-	
+
 	vertices = newVertices
 
 	return &Polygon{
@@ -130,8 +129,8 @@ func (m *Map) addBridges(vertices []Point, edges []Segment) []Segment {
 	// Create bridges for each hole
 	currentEdges := slices.Clone(edges)
 	for i := 0; i < len(m.obstacles); i++ {
-		hole := m.obstacles[i].vertices
-		//polygon := m.obstacles[0].vertices
+		hole := m.obstacles[i].Vertices
+		//polygon := m.obstacles[0].Vertices
 		minDistance := math.MaxFloat64
 		var bestBridge Segment
 
@@ -141,7 +140,7 @@ func (m *Map) addBridges(vertices []Point, edges []Segment) []Segment {
 				continue
 			}
 
-			verticesToCheck = append(verticesToCheck, m.obstacles[j].vertices...)
+			verticesToCheck = append(verticesToCheck, m.obstacles[j].Vertices...)
 		}
 
 		for _, p := range verticesToCheck {
@@ -205,8 +204,6 @@ func (m *Map) addBridges(vertices []Point, edges []Segment) []Segment {
 		}
 
 		currentEdges = newEdges
-
-		fmt.Println("Added ", bestBridge)
 	}
 
 	return currentEdges
@@ -217,9 +214,9 @@ func (m *Map) Draw() fyne.CanvasObject {
 
 	// Draw obstacles
 	for _, obstacle := range m.obstacles {
-		for i := 0; i < len(obstacle.vertices); i++ {
-			start := obstacle.vertices[i]
-			end := obstacle.vertices[(i+1)%len(obstacle.vertices)]
+		for i := 0; i < len(obstacle.Vertices); i++ {
+			start := obstacle.Vertices[i]
+			end := obstacle.Vertices[(i+1)%len(obstacle.Vertices)]
 			line := canvas.NewLine(color.Black)
 			line.Position1 = fyne.NewPos(start.X, start.Y)
 			line.Position2 = fyne.NewPos(end.X, end.Y)
@@ -232,8 +229,8 @@ func (m *Map) Draw() fyne.CanvasObject {
 		point Point
 		label string
 	}{
-		{m.s, "S"},
-		{m.t, "T"},
+		{m.S, "S"},
+		{m.T, "T"},
 	}
 
 	for _, p := range points {
