@@ -1,6 +1,7 @@
 package sedv2
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -25,6 +26,7 @@ func (vg *VisibilityGraph) Draw() fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
 	// Draw the edges of the visibility graph
+	fmt.Println(vg.AdjacencyMap)
 	for start, neighbors := range vg.AdjacencyMap {
 		for _, end := range neighbors {
 			line := canvas.NewLine(color.RGBA{0, 0, 255, 255}) // Blue color for edges
@@ -40,7 +42,7 @@ func (vg *VisibilityGraph) Draw() fyne.CanvasObject {
 		label string
 		color color.Color
 	}{
-		{vg.S, "S", color.RGBA{255, 0, 0, 255}}, // Red color for start point
+		{vg.S, "S", color.RGBA{0, 0, 255, 255}}, // Red color for start point
 		{vg.T, "T", color.RGBA{0, 255, 0, 255}}, // Green color for end point
 	}
 
@@ -62,7 +64,7 @@ func (vg *VisibilityGraph) Draw() fyne.CanvasObject {
 }
 
 func (vg *VisibilityGraph) AddEdges(from Point, to []Point) {
-	vg.AdjacencyMap[from] = to
+	vg.AdjacencyMap[from] = append(vg.AdjacencyMap[from], to...)
 }
 
 func (vg *VisibilityGraph) ShortestEuclideanDistance() (map[Point]float32, []Point) {

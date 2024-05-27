@@ -7,7 +7,7 @@ type Point struct {
 }
 
 func (p Point) Distance(q Point) float32 {
-	return (p.X-q.X)*(p.X-q.X) + (p.Y-q.Y)*(p.Y-q.Y)
+	return float32(math.Sqrt(float64((p.X-q.X)*(p.X-q.X) + (p.Y-q.Y)*(p.Y-q.Y))))
 }
 
 func (p Point) Angle(q Point) float32 {

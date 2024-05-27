@@ -64,6 +64,7 @@ func inputState(game *Game, _ *sedv2.Map) {
 func mapState(game *Game, polygonMap *sedv2.Map) {
 	updateWindow(game, drawObject(polygonMap))
 	polygonMap.FindShortestPath()
+	fmt.Println(polygonMap.Results.Path)
 }
 
 func visibilityGraphState(game *Game, polygonMap *sedv2.Map) {
@@ -82,6 +83,7 @@ func main() {
 	window := myApp.NewWindow("Border Layout")
 
 	polygonMap := sedv2.NewMap(sedv2.Point{-100, -100}, sedv2.Point{100, 100})
+	//polygonMap.AddObstacles(sedv2.Obstacle{Vertices: []sedv2.Point{{10, 10}, {10, 90}, {90, 90}, {90, 10}}})
 	polygonMap.AddObstacles(sedv2.CreateRandomObstacle(3, -90, -90, 0, 0))
 	polygonMap.AddObstacles(sedv2.CreateRandomObstacle(3, 10, 10, 80, 80))
 

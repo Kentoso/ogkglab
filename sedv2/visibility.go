@@ -1,24 +1,41 @@
 package sedv2
 
 import (
-	"sort"
+	"fmt"
+	"math"
+	"slices"
 )
 
 func GetVisibilityGraph(S []Obstacle, start, target Point) VisibilityGraph {
 	allVertices := make([]Point, 0)
+
+	allVertices = append(allVertices, start, target)
 	for _, obstacle := range S {
 		allVertices = append(allVertices, obstacle.Vertices...)
 	}
-	allVertices = append(allVertices, start, target)
 
 	visibilityGraph := NewVisibilityGraph(start, target)
 
 	for _, v := range allVertices {
 		W := VisibleVertices(v, S)
 
+		fmt.Println("Visible vertices for ", v, " are: ", W, "\n")
 		visibilityGraph.AddEdges(v, W)
+
+		for _, w := range W {
+			visibilityGraph.AddEdges(w, []Point{v})
+		}
 	}
-	
+
+	for _, obstacle := range S {
+		for i := 0; i < len(obstacle.Vertices); i++ {
+			vstart := obstacle.Vertices[i]
+			vend := obstacle.Vertices[(i+1)%len(obstacle.Vertices)]
+			visibilityGraph.AddEdges(vstart, []Point{vend})
+			visibilityGraph.AddEdges(vend, []Point{vstart})
+		}
+	}
+
 	return visibilityGraph
 }
 
@@ -35,12 +52,24 @@ func sortVerticesByAngle(p Point, vertices []Point) []Point {
 		distance := p.Distance(v)
 		sortedVertices[i] = Vertex{v, angle, distance}
 	}
-	sort.Slice(sortedVertices, func(i, j int) bool {
-		if sortedVertices[i].Angle-sortedVertices[j].Angle < 1e-10 {
-			return sortedVertices[i].Distance < sortedVertices[j].Distance
+
+	vertexComparator := func(a, b Vertex) int {
+		const epsilon = 1e-10
+		if math.Abs(float64(a.Angle-b.Angle)) < epsilon {
+			if a.Distance < b.Distance {
+				return -1
+			} else if a.Distance > b.Distance {
+				return 1
+			}
+			return 0
 		}
-		return sortedVertices[i].Angle < sortedVertices[j].Angle
-	})
+		if a.Angle < b.Angle {
+			return -1
+		}
+		return 1
+	}
+
+	slices.SortFunc(sortedVertices, vertexComparator)
 
 	sortedPoints := make([]Point, len(sortedVertices))
 	for i, v := range sortedVertices {
@@ -60,19 +89,55 @@ func makePointToObstacleMap(S []Obstacle) map[Point]*Obstacle {
 	return pointToObstacle
 }
 
+func a(p Point, S []Obstacle) []Point {
+	W := make([]Point, 0)
+	for _, obstacle := range S {
+		for _, vertex := range obstacle.Vertices {
+			if vertex.X == p.X && vertex.Y == p.Y {
+				continue
+			}
+			visible := true
+			for _, otherObstacle := range S {
+				for i := 0; i < len(otherObstacle.Vertices); i++ {
+					start := otherObstacle.Vertices[i]
+					end := otherObstacle.Vertices[(i+1)%len(otherObstacle.Vertices)]
+					if doSegmentsIntersect(p, vertex, start, end) {
+						visible = false
+						break
+					}
+				}
+				if !visible {
+					break
+				}
+			}
+			if visible {
+				W = append(W, vertex)
+			}
+		}
+	}
+	return W
+}
+
 func VisibleVertices(p Point, S []Obstacle) []Point {
 	pointToObstacle := makePointToObstacleMap(S)
 
 	// Sort the obstacle vertices according to the clockwise angle
 	allVertices := make([]Point, 0)
+
 	for _, obstacle := range S {
-		allVertices = append(allVertices, obstacle.Vertices...)
+		for _, vertex := range obstacle.Vertices {
+			if vertex == p {
+				continue
+			}
+			allVertices = append(allVertices, vertex)
+		}
 	}
 
 	sortedVertices := sortVerticesByAngle(p, allVertices)
 
 	T := NewSegmentTree(p)
 	pDir := Point{1, 0}
+	T.currRaydir = pDir
 	for _, obstacle := range S {
 		for i := 0; i < len(obstacle.Vertices); i++ {
 			start := obstacle.Vertices[i]
@@ -88,6 +153,10 @@ func VisibleVertices(p Point, S []Obstacle) []Point {
 	}
 
 	var W []Point
+
+	if T.set.Size() == 0 || len(pointToObstacle) > 0 {
+		return a(p, S)
+	}
 
 	wIPrev := Point{}
 	wasPrevVisible := false
