@@ -8,21 +8,20 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"image/color"
-	"ogkglab/sed"
+	"ogkglab/sedv2"
 )
 
 const (
 	stateInput = iota
 	stateMap
-	statePolygon
-	stateTriangulation
+	stateVisibilityGraph
 	stateShortestPath
 )
 
 //var currentState = stateInput
 
 type Game struct {
-	polygonMap   *sed.Map
+	polygonMap   *sedv2.Map
 	window       *fyne.Window
 	menu         *fyne.Container
 	currentState int
@@ -48,7 +47,6 @@ func getMenu(nextButtonFunc func()) *fyne.Container {
 }
 
 func updateWindow(game *Game, drawing *fyne.Container) {
-	//menu := getMenu(nextButtonFunc)
 	menu := game.menu
 	window := game.window
 
@@ -59,58 +57,38 @@ func updateWindow(game *Game, drawing *fyne.Container) {
 	(*window).SetContent(content)
 }
 
-func inputState(game *Game, polygonMap *sed.Map) {
+func inputState(game *Game, _ *sedv2.Map) {
+	updateWindow(game, container.NewWithoutLayout())
+}
+
+func mapState(game *Game, polygonMap *sedv2.Map) {
 	updateWindow(game, drawObject(polygonMap))
-}
-
-func mapState(game *Game, polygonMap *sed.Map) {
-	updateWindow(game, drawObject(polygonMap))
-}
-
-func polygonState(game *Game, polygonMap *sed.Map) {
-	updateWindow(game, drawObject(polygonMap.ToPolygon()))
-}
-
-func triangulationState(game *Game, polygonMap *sed.Map) {
-	t := sed.TriangulateEarClipping(*polygonMap.ToPolygon())
-	//updateWindow(game, drawObject(t))
-
-	tWithSandT := sed.IncorporatePoints(t, polygonMap.S, polygonMap.T)
-	updateWindow(game, drawObject(tWithSandT))
-	//fmt.Println(tWithSandT.ToVertexAdjacencyMap())
-
-	visibilityGraph := sed.NewVisibilityGraph(tWithSandT, polygonMap.S, polygonMap.T)
-	distanceMap, path := visibilityGraph.ShortestEuclideanDistance()
-	fmt.Println(distanceMap)
-	fmt.Println(path)
-	//corridors := tWithSandT.GetCorridors()
-	//for _, corridor := range corridors {
-	//	corridor.Print()
-	//}
-}
-
-func shortestPathState(game *Game, polygonMap *sed.Map) {
 	polygonMap.FindShortestPath()
+}
 
+func visibilityGraphState(game *Game, polygonMap *sedv2.Map) {
+	//updateWindow(game, drawObject(polygonMap.StepsResults.Polygon))
+	updateWindow(game, drawObject(polygonMap.Results.VisibilityGraph))
+}
+
+func shortestPathState(game *Game, polygonMap *sedv2.Map) {
 	updateWindow(game, drawObject(polygonMap))
 }
 
-var stateFuncs = []func(*Game, *sed.Map){inputState, mapState, polygonState, triangulationState, shortestPathState}
+var stateFuncs = []func(*Game, *sedv2.Map){inputState, mapState, visibilityGraphState, shortestPathState}
 
 func main() {
 	myApp := app.New()
 	window := myApp.NewWindow("Border Layout")
 
-	polygonMap := sed.NewMap(sed.Point{10, 10}, sed.Point{100, 100})
-	polygonMap.AddObstacle(sed.CreateRandomObstacle(20, 10, 10, 20, 20))
-	polygonMap.AddObstacle(sed.CreateRandomObstacle(20, 30, 30, 40, 40))
-	polygonMap.AddObstacle(sed.CreateRandomObstacle(20, 50, 50, 60, 60))
-	//polygonMap.AddObstacle(sed.Obstacle{[]sed.Point{{30, 50}, {70, 50}, {60, 90}}})
-	//polygonMap.AddObstacle(sed.Obstacle{[]sed.Point{{-30, -50}, {-70, -50}, {-60, -90}}})
+	polygonMap := sedv2.NewMap(sedv2.Point{-100, -100}, sedv2.Point{100, 100})
+	polygonMap.AddObstacles(sedv2.CreateRandomObstacle(3, -90, -90, 0, 0))
+	polygonMap.AddObstacles(sedv2.CreateRandomObstacle(3, 10, 10, 80, 80))
+
 	g := Game{
 		polygonMap:   polygonMap,
 		window:       &window,
-		currentState: statePolygon,
+		currentState: stateInput,
 	}
 
 	nextStateFunc := func() {
