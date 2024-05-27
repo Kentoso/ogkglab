@@ -1,7 +1,6 @@
 package sedv2
 
 import (
-	"fmt"
 	"math"
 	"slices"
 )
@@ -18,8 +17,10 @@ func GetVisibilityGraph(S []Obstacle, start, target Point) VisibilityGraph {
 
 	for _, v := range allVertices {
 		W := VisibleVertices(v, S)
+		if W == nil {
+			continue
+		}
 
-		fmt.Println("Visible vertices for ", v, " are: ", W, "\n")
 		visibilityGraph.AddEdges(v, W)
 
 		for _, w := range W {
@@ -89,35 +90,6 @@ func makePointToObstacleMap(S []Obstacle) map[Point]*Obstacle {
 	return pointToObstacle
 }
 
-func a(p Point, S []Obstacle) []Point {
-	W := make([]Point, 0)
-	for _, obstacle := range S {
-		for _, vertex := range obstacle.Vertices {
-			if vertex.X == p.X && vertex.Y == p.Y {
-				continue
-			}
-			visible := true
-			for _, otherObstacle := range S {
-				for i := 0; i < len(otherObstacle.Vertices); i++ {
-					start := otherObstacle.Vertices[i]
-					end := otherObstacle.Vertices[(i+1)%len(otherObstacle.Vertices)]
-					if doSegmentsIntersect(p, vertex, start, end) {
-						visible = false
-						break
-					}
-				}
-				if !visible {
-					break
-				}
-			}
-			if visible {
-				W = append(W, vertex)
-			}
-		}
-	}
-	return W
-}
-
 func VisibleVertices(p Point, S []Obstacle) []Point {
 	pointToObstacle := makePointToObstacleMap(S)
 
@@ -149,14 +121,17 @@ func VisibleVertices(p Point, S []Obstacle) []Point {
 					end:   end,
 				})
 			}
+			//intersection, didIntersect := p.GetIntersectionWithRay(pDir, start, end)
+			//if didIntersect && intersection != p {
+			//	T.AddSegmentIntersection(Segment{
+			//		start: start,
+			//		end:   end,
+			//	})
+			//}
 		}
 	}
 
 	var W []Point
-
-	if T.set.Size() == 0 || len(pointToObstacle) > 0 {
-		return a(p, S)
-	}
 
 	wIPrev := Point{}
 	wasPrevVisible := false
@@ -169,8 +144,11 @@ func VisibleVertices(p Point, S []Obstacle) []Point {
 			wasPrevVisible = true
 		} else {
 			wasPrevVisible = false
+			wIPrev = wI
+			continue
 		}
 
+		// appended to W
 		obstacle := pointToObstacle[wI]
 
 		other1, other2 := Point{}, Point{}
@@ -188,13 +166,13 @@ func VisibleVertices(p Point, S []Obstacle) []Point {
 
 		}
 
-		o1CP, o2CP := crossProduct(p, wI, other1), crossProduct(p, wI, other2)
-		if o1CP < 0 {
+		o1CP, o2CP := -crossProduct(p, wI, other1), -crossProduct(p, wI, other2)
+		if o1CP < 0 && other1 != p {
 			T.AddSegmentIntersection(Segment{
 				start: wI,
 				end:   other1,
 			})
-		} else if o1CP > 0 {
+		} else if o1CP > 0 && other1 != p {
 			T.RemoveSegmentIntersection(SegmentIntersection{
 				segment: Segment{
 					start: wI,
@@ -203,16 +181,16 @@ func VisibleVertices(p Point, S []Obstacle) []Point {
 			})
 		}
 
-		if o2CP < 0 {
+		if o2CP < 0 && other2 != p {
 			T.AddSegmentIntersection(Segment{
-				start: wI,
-				end:   other2,
+				start: other2,
+				end:   wI,
 			})
-		} else if o2CP > 0 {
+		} else if o2CP > 0 && other2 != p {
 			T.RemoveSegmentIntersection(SegmentIntersection{
 				segment: Segment{
-					start: wI,
-					end:   other2,
+					start: other2,
+					end:   wI,
 				},
 			})
 		}
@@ -239,8 +217,12 @@ func intersectsObstacle(p, wI Point, obstacle *Obstacle) bool {
 
 func Visible(i int, p, wIPrev, wI Point, pointToObstacle map[Point]*Obstacle, T *SegmentIntersectionTree, wasPrevVisible bool) bool {
 	obstacle, ok := pointToObstacle[wI]
+	obstacleP, okP := pointToObstacle[p]
+	if ok && intersectsObstacle(p, wI, obstacle) {
+		return false
+	}
 
-	if ok && !intersectsObstacle(p, wI, obstacle) {
+	if okP && ok && obstacleP == obstacle {
 		return false
 	}
 
@@ -248,6 +230,18 @@ func Visible(i int, p, wIPrev, wI Point, pointToObstacle map[Point]*Obstacle, T 
 		s, exists := T.GetLeftmostSegmentIntersection()
 		if exists {
 			intersects := doSegmentsIntersect(p, wI, s.segment.start, s.segment.end)
+			var segmentAngle float32 = 0
+			if p == s.segment.start {
+				segmentAngle = p.Angle(s.segment.end)
+			}
+			if p == s.segment.end {
+				segmentAngle = p.Angle(s.segment.start)
+			}
+			wIAngle := p.Angle(wI)
+			if p == s.segment.start || p == s.segment.end {
+				return wIAngle < segmentAngle
+			}
+
 			if intersects {
 				return false
 			}

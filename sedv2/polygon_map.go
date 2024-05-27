@@ -1,14 +1,11 @@
 package sedv2
 
 import (
+	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"image/color"
-	"math"
-	"math/rand"
-	"sort"
-	"time"
 )
 
 type Results struct {
@@ -88,38 +85,26 @@ func (m *Map) AddObstacles(obstacles ...Obstacle) {
 	m.obstacles = append(m.obstacles, obstacles...)
 }
 
+func (m *Map) ClearObstacles() {
+	m.obstacles = []Obstacle{}
+}
+
+func (m *Map) ClearStartAndTarget() {
+	m.S = Point{}
+	m.T = Point{}
+}
+
+func (m *Map) Clear() {
+	m.ClearObstacles()
+	m.ClearStartAndTarget()
+	m.Results = Results{}
+}
+
 func (m *Map) FindShortestPath() []Point {
 	visibilityGraph := GetVisibilityGraph(m.obstacles, m.S, m.T)
+	fmt.Println(visibilityGraph)
 	m.Results.VisibilityGraph = &visibilityGraph
 	_, path := visibilityGraph.ShortestEuclideanDistance()
 	m.Results.Path = path
 	return path
-}
-
-func CreateRandomObstacle(numPoints int, minX, minY, maxX, maxY float32) Obstacle {
-	rand.Seed(time.Now().UnixNano())
-
-	points := make([]Point, numPoints)
-	for i := 0; i < numPoints; i++ {
-		points[i] = Point{
-			X: minX + rand.Float32()*(maxX-minX),
-			Y: minY + rand.Float32()*(maxY-minY),
-		}
-	}
-
-	var centroid Point
-	for _, p := range points {
-		centroid.X += p.X
-		centroid.Y += p.Y
-	}
-	centroid.X /= float32(numPoints)
-	centroid.Y /= float32(numPoints)
-
-	sort.Slice(points, func(i, j int) bool {
-		angle1 := math.Atan2(float64(points[i].Y-centroid.Y), float64(points[i].X-centroid.X))
-		angle2 := math.Atan2(float64(points[j].Y-centroid.Y), float64(points[j].X-centroid.X))
-		return angle1 < angle2
-	})
-
-	return Obstacle{Vertices: points}
 }

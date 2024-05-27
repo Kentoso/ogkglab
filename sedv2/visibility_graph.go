@@ -1,7 +1,6 @@
 package sedv2
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -26,7 +25,6 @@ func (vg *VisibilityGraph) Draw() fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
 	// Draw the edges of the visibility graph
-	fmt.Println(vg.AdjacencyMap)
 	for start, neighbors := range vg.AdjacencyMap {
 		for _, end := range neighbors {
 			line := canvas.NewLine(color.RGBA{0, 0, 255, 255}) // Blue color for edges

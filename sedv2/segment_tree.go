@@ -1,6 +1,7 @@
 package sedv2
 
 import (
+	"fmt"
 	"github.com/emirpasic/gods/sets/treeset"
 )
 
@@ -34,13 +35,62 @@ func NewSegmentTree(point Point) *SegmentIntersectionTree {
 		aSegment := a.(SegmentIntersection)
 		bSegment := b.(SegmentIntersection)
 
+		if aSegment.segment.start == bSegment.segment.start && aSegment.segment.end == bSegment.segment.end ||
+			aSegment.segment.end == bSegment.segment.start && aSegment.segment.start == bSegment.segment.end {
+			return 0
+		}
+
 		aDistance, _ := aSegment.pointRayDistance(tree.point, tree.currRaydir)
 		bDistance, _ := bSegment.pointRayDistance(tree.point, tree.currRaydir)
 
+		fmt.Println("Distance comparison:")
+		fmt.Printf("aSegment: %v\n", aSegment)
+		fmt.Printf("bSegment: %v\n", bSegment)
+		fmt.Printf("aDistance: %f\n", aDistance)
+		fmt.Printf("bDistance: %f\n", bDistance)
+		fmt.Printf("Point: %v\n", tree.point)
+		fmt.Printf("Raydir: %v\n", tree.currRaydir)
 		if aDistance < bDistance {
 			return -1
 		}
 		if aDistance > bDistance {
+			return 1
+		}
+
+		pointsA := [2]Point{aSegment.segment.start, aSegment.segment.end}
+		pointsB := [2]Point{bSegment.segment.start, bSegment.segment.end}
+
+		aSamePointIndex, bSamePointIndex := -1, -1
+		for i := 0; i < 2; i++ {
+			for j := 0; j < 2; j++ {
+				if pointsA[i] == pointsB[j] {
+					aSamePointIndex, bSamePointIndex = i, j
+				}
+			}
+		}
+		aNonSamePointIndex, bNonSamePointIndex := (aSamePointIndex+1)%2, (bSamePointIndex+1)%2
+		//distA := tree.point.Distance(pointsA[aNonSamePointIndex])
+		//distB := tree.point.Distance(pointsB[bNonSamePointIndex])
+		angleA := tree.point.Angle(pointsA[aNonSamePointIndex])
+		angleB := tree.point.Angle(pointsB[bNonSamePointIndex])
+
+		fmt.Printf("ANonSame: %v\n", pointsA[aNonSamePointIndex])
+		fmt.Printf("BNonSame: %v\n", pointsB[bNonSamePointIndex])
+		//fmt.Printf("DistA: %f\n", distA)
+		//fmt.Printf("DistB: %f\n", distB)
+		fmt.Printf("AngleA: %f\n", angleA)
+		fmt.Printf("AngleB: %f\n", angleB)
+
+		//if distA < distB {
+		//	return -1
+		//}
+		//if distA > distB {
+		//	return 1
+		//}
+		if angleA < angleB {
+			return -1
+		}
+		if angleA > angleB {
 			return 1
 		}
 

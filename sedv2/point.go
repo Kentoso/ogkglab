@@ -47,6 +47,7 @@ func (p Point) GetIntersectionWithRay(raydir Point, q Point, s Point) (Point, bo
 	if t >= 0 && u >= 0 && u <= 1 {
 		ix := p.X + t*rx
 		iy := p.Y + t*ry
+
 		return Point{ix, iy}, true
 	}
 
