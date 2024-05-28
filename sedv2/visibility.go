@@ -114,20 +114,20 @@ func VisibleVertices(p Point, S []Obstacle) []Point {
 		for i := 0; i < len(obstacle.Vertices); i++ {
 			start := obstacle.Vertices[i]
 			end := obstacle.Vertices[(i+1)%len(obstacle.Vertices)]
-			_, didIntersect := p.GetIntersectionWithRay(pDir, start, end)
-			if didIntersect {
-				T.AddSegmentIntersection(Segment{
-					start: start,
-					end:   end,
-				})
-			}
-			//intersection, didIntersect := p.GetIntersectionWithRay(pDir, start, end)
-			//if didIntersect && intersection != p {
+			//_, didIntersect := p.GetIntersectionWithRay(pDir, start, end)
+			//if didIntersect {
 			//	T.AddSegmentIntersection(Segment{
 			//		start: start,
 			//		end:   end,
 			//	})
 			//}
+			intersection, didIntersect := p.GetIntersectionWithRay(pDir, start, end)
+			if didIntersect && intersection != p {
+				T.AddSegmentIntersection(Segment{
+					start: start,
+					end:   end,
+				})
+			}
 		}
 	}
 
@@ -145,10 +145,8 @@ func VisibleVertices(p Point, S []Obstacle) []Point {
 		} else {
 			wasPrevVisible = false
 			wIPrev = wI
-			continue
 		}
 
-		// appended to W
 		obstacle := pointToObstacle[wI]
 
 		other1, other2 := Point{}, Point{}
@@ -230,18 +228,6 @@ func Visible(i int, p, wIPrev, wI Point, pointToObstacle map[Point]*Obstacle, T 
 		s, exists := T.GetLeftmostSegmentIntersection()
 		if exists {
 			intersects := doSegmentsIntersect(p, wI, s.segment.start, s.segment.end)
-			var segmentAngle float32 = 0
-			if p == s.segment.start {
-				segmentAngle = p.Angle(s.segment.end)
-			}
-			if p == s.segment.end {
-				segmentAngle = p.Angle(s.segment.start)
-			}
-			wIAngle := p.Angle(wI)
-			if p == s.segment.start || p == s.segment.end {
-				return wIAngle < segmentAngle
-			}
-
 			if intersects {
 				return false
 			}

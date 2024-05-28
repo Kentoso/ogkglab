@@ -96,10 +96,13 @@ func main() {
 
 	//polygonMap.AddObstacles(sedv2.Obstacle{Vertices: []sedv2.Point{{10, 10}, {10, 90}, {90, 90}, {90, 10}}})
 	obstacles := []sedv2.Obstacle{
-		//sedv2.CreateRandomObstacle(5, -90, -90, -60, -60),
-		//sedv2.CreateRandomObstacle(3, 50, 50, 80, 60),
-		sedv2.Obstacle{Vertices: []sedv2.Point{{10, 10}, {10, 90}, {90, 90}, {90, 10}}},
-		sedv2.Obstacle{Vertices: []sedv2.Point{{10, 10}, {10, 90}, {90, 90}, {90, 10}}}.Translate(-90, -90),
+		//sedv2.Obstacle{Vertices: []sedv2.Point{{-}},
+		sedv2.CreateRandomObstacle(3, -90, -90, -30, -30),
+		sedv2.CreateRandomObstacle(3, 40, 40, 80, 80),
+		//sedv2.Obstacle{Vertices: []sedv2.Point{{10, 10}, {10, 90}, {90, 90}, {90, 10}}},
+		//sedv2.Obstacle{Vertices: []sedv2.Point{{10, 10}, {10, 90}, {90, 90}, {90, 10}}}.Translate(-90, -90),
+		//sedv2.Obstacle{Vertices: []sedv2.Point{{-80, -70}, {-40, -30}, {-60, -60}}},
+		//sedv2.Obstacle{Vertices: []sedv2.Point{{40, 0}, {60, 70}, {30, 60}}},
 	}
 
 	polygonMap.AddObstacles(obstacles...)
