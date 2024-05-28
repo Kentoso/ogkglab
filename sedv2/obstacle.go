@@ -1,9 +1,11 @@
 package sedv2
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -41,4 +43,15 @@ func (o Obstacle) Translate(x float32, y float32) Obstacle {
 		o.Vertices[i].Y += y
 	}
 	return o
+}
+
+func (o Obstacle) ToString() string {
+	var sb strings.Builder
+	for i, vertex := range o.Vertices {
+		sb.WriteString(fmt.Sprintf("%f,%f", vertex.X, vertex.Y))
+		if i < len(o.Vertices)-1 {
+			sb.WriteString("\n")
+		}
+	}
+	return sb.String()
 }

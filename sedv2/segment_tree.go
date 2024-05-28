@@ -1,7 +1,6 @@
 package sedv2
 
 import (
-	"fmt"
 	"github.com/emirpasic/gods/sets/treeset"
 	"math"
 	"slices"
@@ -45,13 +44,6 @@ func NewSegmentTree(point Point) *SegmentIntersectionTree {
 		aDistance, _ := aSegment.pointRayDistance(tree.point, tree.currRaydir)
 		bDistance, _ := bSegment.pointRayDistance(tree.point, tree.currRaydir)
 
-		fmt.Println("Distance comparison:")
-		fmt.Printf("aSegment: %v\n", aSegment)
-		fmt.Printf("bSegment: %v\n", bSegment)
-		fmt.Printf("aDistance: %f\n", aDistance)
-		fmt.Printf("bDistance: %f\n", bDistance)
-		fmt.Printf("Point: %v\n", tree.point)
-		fmt.Printf("Raydir: %v\n", tree.currRaydir)
 		if aDistance < bDistance {
 			return -1
 		}
@@ -73,11 +65,6 @@ func NewSegmentTree(point Point) *SegmentIntersectionTree {
 		aNonSamePointIndex, bNonSamePointIndex := (aSamePointIndex+1)%2, (bSamePointIndex+1)%2
 		angleA := tree.point.Angle(pointsA[aNonSamePointIndex])
 		angleB := tree.point.Angle(pointsB[bNonSamePointIndex])
-
-		fmt.Printf("ANonSame: %v\n", pointsA[aNonSamePointIndex])
-		fmt.Printf("BNonSame: %v\n", pointsB[bNonSamePointIndex])
-		fmt.Printf("AngleA: %f\n", angleA)
-		fmt.Printf("AngleB: %f\n", angleB)
 
 		if angleA < angleB {
 			return -1
@@ -124,13 +111,6 @@ func (s *SegmentIntersectionTree) GetLeftmostSegmentIntersection() (SegmentInter
 		aDistance, _ := aSegment.pointRayDistance(s.point, s.currRaydir)
 		bDistance, _ := bSegment.pointRayDistance(s.point, s.currRaydir)
 
-		fmt.Println("Distance comparison:")
-		fmt.Printf("aSegment: %v\n", aSegment)
-		fmt.Printf("bSegment: %v\n", bSegment)
-		fmt.Printf("aDistance: %f\n", aDistance)
-		fmt.Printf("bDistance: %f\n", bDistance)
-		fmt.Printf("Point: %v\n", s.point)
-		fmt.Printf("Raydir: %v\n", s.currRaydir)
 		if aDistance < bDistance {
 			return -1
 		}
@@ -152,11 +132,6 @@ func (s *SegmentIntersectionTree) GetLeftmostSegmentIntersection() (SegmentInter
 		aNonSamePointIndex, bNonSamePointIndex := (aSamePointIndex+1)%2, (bSamePointIndex+1)%2
 		angleA := s.point.Angle(pointsA[aNonSamePointIndex])
 		angleB := s.point.Angle(pointsB[bNonSamePointIndex])
-
-		fmt.Printf("ANonSame: %v\n", pointsA[aNonSamePointIndex])
-		fmt.Printf("BNonSame: %v\n", pointsB[bNonSamePointIndex])
-		fmt.Printf("AngleA: %f\n", angleA)
-		fmt.Printf("AngleB: %f\n", angleB)
 
 		if angleA < angleB {
 			return -1

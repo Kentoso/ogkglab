@@ -1,7 +1,6 @@
 package sedv2
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -14,8 +13,7 @@ type Results struct {
 }
 
 type Obstacle struct {
-	Vertices      []Point
-	sortingVertex Point
+	Vertices []Point
 }
 
 type Map struct {
@@ -102,7 +100,6 @@ func (m *Map) Clear() {
 
 func (m *Map) FindShortestPath() []Point {
 	visibilityGraph := GetVisibilityGraph(m.obstacles, m.S, m.T)
-	fmt.Println(visibilityGraph)
 	m.Results.VisibilityGraph = &visibilityGraph
 	_, path := visibilityGraph.ShortestEuclideanDistance()
 	m.Results.Path = path
